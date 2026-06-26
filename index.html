@@ -37,7 +37,7 @@
             input, select, textarea { font-size: 16px !important; }
         }
         /* Thumbnail produk seragam */
-        .product-thumb { aspect-ratio: 4 / 3; width: 100%; object-fit: cover; background: #f0fdf4; }
+        .product-thumb { aspect-ratio: 3 / 2; width: 100%; object-fit: cover; background: #f0fdf4; display: block; }
 
         /* Bottom sheet (mobile cart drawer) */
         .sheet { transition: transform .3s cubic-bezier(.32,.72,0,1); }
@@ -784,7 +784,7 @@
         //               Sheet milik toko itu sendiri (disambungkan di Pengaturan).
         //  Cukup diisi SEKALI di sini, lalu commit ke GitHub.
         // =====================================================================
-        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbzBZ2ItF1DeKR6Ds-WyXqI9M0kgfo6AQcuxR-GoPldbR03TnzVY79FykcX_rRokEC_0/exec'; // = URL Registry
+        const BACKEND_URL = ''; // = URL Registry
 
         // ---------- Storage ----------
         const K = {
@@ -1267,19 +1267,19 @@
 
             filtered.forEach(p => {
                 const div = document.createElement('div');
-                div.className = 'bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-md cursor-pointer transition-all active:scale-95 flex flex-col border-b-4 hover:border-emerald-500 shadow-sm';
+                div.className = 'group bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-md cursor-pointer transition-all active:scale-[0.98] flex flex-col hover:border-emerald-400 shadow-sm';
                 div.onclick = () => addToCart(p);
                 const thumb = p.image
                     ? `<img src="${p.image}" alt="${escapeHtml(p.name)}" class="product-thumb" loading="lazy">`
                     : `<div class="product-thumb flex items-center justify-center text-emerald-300 text-3xl font-extrabold">${escapeHtml((p.name || '?').charAt(0).toUpperCase())}</div>`;
                 div.innerHTML = `
                     ${thumb}
-                    <div class="p-3 flex flex-col gap-1 flex-1">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide">${escapeHtml(p.category)}</span>
-                        <h4 class="font-bold text-slate-800 text-sm leading-snug line-clamp-2 flex-1">${escapeHtml(p.name)}</h4>
-                        <div class="flex justify-between items-center gap-1 mt-1">
-                            <span class="font-extrabold text-emerald-600 text-sm sm:text-base truncate">${formatRupiah(p.price)}</span>
-                            <div class="w-9 h-9 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shrink-0 shadow-sm">+</div>
+                    <div class="p-2.5 sm:p-3 flex flex-col gap-1 flex-1">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide truncate">${escapeHtml(p.category)}</span>
+                        <h4 class="font-bold text-slate-800 text-[13px] sm:text-sm leading-snug line-clamp-2 min-h-[2.4em]">${escapeHtml(p.name)}</h4>
+                        <div class="mt-auto pt-1 flex items-end justify-between gap-2">
+                            <span class="font-extrabold text-emerald-600 text-sm sm:text-base whitespace-nowrap">${formatRupiah(p.price)}</span>
+                            <span class="w-8 h-8 bg-emerald-600 group-hover:bg-emerald-700 text-white rounded-lg flex items-center justify-center font-bold text-lg leading-none shrink-0 shadow-sm">+</span>
                         </div>
                     </div>`;
                 container.appendChild(div);
