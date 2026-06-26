@@ -200,9 +200,10 @@
                         <button onclick="cancelActiveBill()" class="text-emerald-700 hover:text-emerald-900 font-bold underline shrink-0">Batalkan</button>
                     </div>
 
-                    <div id="products-container" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 overflow-y-auto max-h-[58vh] md:max-h-[62vh] pr-1">
+                    <div id="products-container" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                         <!-- rendered by JS -->
                     </div>
+                    <div id="product-pagination" class="flex flex-wrap items-center justify-center gap-1.5 pt-1"></div>
                 </div>
 
                 <!-- Cart (Desktop right pane) -->
@@ -586,21 +587,28 @@
     </div>
 
     <!-- MODAL: QRIS -->
-    <div id="qris-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[55] flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                <h3 class="font-extrabold text-slate-900 text-lg">Pembayaran QRIS</h3>
-                <button onclick="closeQrisModal()" class="text-slate-400 hover:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+    <div id="qris-modal" class="fixed inset-0 bg-white z-[60] hidden flex flex-col">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
+            <button onclick="closeQrisModal()" class="inline-flex items-center gap-1 text-slate-500 hover:text-slate-700 font-semibold text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                Kembali
+            </button>
+            <h3 class="font-extrabold text-slate-900">Pembayaran QRIS</h3>
+            <span class="w-16"></span>
+        </div>
+        <div class="flex-1 overflow-y-auto flex flex-col items-center justify-center gap-3 px-4 py-4 text-center">
+            <div id="qris-store-name" class="text-sm font-bold text-slate-500"></div>
+            <div class="text-3xl sm:text-4xl font-extrabold text-emerald-600 leading-none">
+                <span id="qris-modal-total">Rp 0</span>
             </div>
-            <div class="p-6 flex flex-col items-center gap-4 text-center">
-                <span class="text-xs font-semibold text-slate-400 tracking-widest uppercase">Pindai QRIS</span>
-                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-inner flex flex-col items-center justify-center">
-                    <img id="qris-qr-code" src="" alt="Kode QR pembayaran" class="w-48 h-48 object-contain">
-                    <span id="qris-modal-total" class="font-extrabold text-xl text-slate-900 mt-3">Rp 0</span>
-                </div>
-                <p id="qris-caption" class="text-xs text-slate-500">Pelanggan memindai QR dengan m-banking atau e-wallet (Gopay/OVO/Dana).</p>
-                <button onclick="completeQrisTransaction()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 px-4 rounded-xl font-bold transition-all shadow-md">Tandai Lunas &amp; Cetak Struk</button>
+            <div class="bg-white rounded-3xl border-2 border-slate-200 p-3 sm:p-4 shadow-sm">
+                <img id="qris-qr-code" src="" alt="Kode QRIS pembayaran" class="block mx-auto w-auto h-auto max-w-[86vw] max-h-[56vh] object-contain rounded-xl">
             </div>
+            <p id="qris-caption" class="text-xs text-slate-500 max-w-sm leading-relaxed"></p>
+        </div>
+        <div class="px-4 py-3 border-t border-slate-100 flex flex-col gap-2 shrink-0 pb-safe">
+            <button onclick="completeQrisTransaction()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 px-4 rounded-2xl font-bold text-base transition-all shadow-md">Sudah Dibayar — Cetak Struk</button>
+            <button onclick="closeQrisModal()" class="w-full text-slate-500 hover:text-slate-700 py-2 text-sm font-semibold">Batal</button>
         </div>
     </div>
 
@@ -786,8 +794,8 @@
         //               Sheet milik toko itu sendiri (disambungkan di Pengaturan).
         //  Cukup diisi SEKALI di sini, lalu commit ke GitHub.
         // =====================================================================
-        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbzBZ2ItF1DeKR6Ds-WyXqI9M0kgfo6AQcuxR-GoPldbR03TnzVY79FykcX_rRokEC_0/exec'; // = URL Registry
-        const APP_VERSION = 'v2026.06.26';
+        const BACKEND_URL = ''; // = URL Registry
+        const APP_VERSION = 'v2026.06.27b';
 
         // ---------- Storage ----------
         const K = {
@@ -824,6 +832,8 @@
 
         let selectedCategory = 'Semua';
         let searchQuery = '';
+        let productPage = 1;
+        const PRODUCTS_PER_PAGE = 12;
         let orderTotal = 0;
         let incomeChart = null;
 
@@ -1243,12 +1253,12 @@
                     ? 'category-btn bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shadow-sm'
                     : 'category-btn bg-slate-100 text-slate-600 hover:bg-slate-200 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all';
                 btn.textContent = cat;
-                btn.onclick = () => { selectedCategory = cat; renderCategoryBar(); renderProducts(); };
+                btn.onclick = () => { selectedCategory = cat; productPage = 1; renderCategoryBar(); renderProducts(); };
                 bar.appendChild(btn);
             });
         }
 
-        window.filterProducts = () => { searchQuery = document.getElementById('search-product').value; renderProducts(); };
+        window.filterProducts = () => { searchQuery = document.getElementById('search-product').value; productPage = 1; renderProducts(); };
 
         // ---------- Products ----------
         window.renderProducts = () => {
@@ -1265,10 +1275,18 @@
                     <p class="font-semibold text-slate-500">Belum ada produk di sini.</p>
                     <p class="text-xs mt-1">Buka tab <b>Kelola Produk</b> untuk menambahkan, atau muat produk contoh lewat <b>Pengaturan</b>.</p>
                 </div>`;
+                renderProductPagination(0, 1);
                 return;
             }
 
-            filtered.forEach(p => {
+            // Pagination
+            const totalPages = Math.max(1, Math.ceil(filtered.length / PRODUCTS_PER_PAGE));
+            if (productPage > totalPages) productPage = totalPages;
+            if (productPage < 1) productPage = 1;
+            const startIdx = (productPage - 1) * PRODUCTS_PER_PAGE;
+            const pageItems = filtered.slice(startIdx, startIdx + PRODUCTS_PER_PAGE);
+
+            pageItems.forEach(p => {
                 const div = document.createElement('div');
                 div.className = 'group bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-md cursor-pointer transition-all active:scale-[0.98] flex flex-col hover:border-emerald-400 shadow-sm';
                 div.onclick = () => addToCart(p);
@@ -1287,6 +1305,45 @@
                     </div>`;
                 container.appendChild(div);
             });
+
+            renderProductPagination(filtered.length, totalPages);
+        };
+
+        function renderProductPagination(totalItems, totalPages) {
+            const el = document.getElementById('product-pagination');
+            if (!el) return;
+            el.innerHTML = '';
+            if (totalItems <= PRODUCTS_PER_PAGE) return; // tak perlu pagination
+            const mkBtn = (label, page, opts = {}) => {
+                const b = document.createElement('button');
+                b.textContent = label;
+                const active = opts.active;
+                b.className = 'min-w-9 h-9 px-3 rounded-xl text-sm font-bold transition-all ' +
+                    (active ? 'bg-emerald-600 text-white shadow-sm'
+                        : opts.disabled ? 'bg-slate-50 text-slate-300 cursor-not-allowed'
+                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100');
+                if (opts.disabled) b.disabled = true;
+                else b.onclick = () => goProductPage(page);
+                return b;
+            };
+            el.appendChild(mkBtn('‹', productPage - 1, { disabled: productPage <= 1 }));
+            // window halaman: tampilkan maksimal 5 nomor di sekitar halaman aktif
+            let from = Math.max(1, productPage - 2);
+            let to = Math.min(totalPages, from + 4);
+            from = Math.max(1, to - 4);
+            if (from > 1) { el.appendChild(mkBtn('1', 1)); if (from > 2) el.appendChild(dots()); }
+            for (let i = from; i <= to; i++) el.appendChild(mkBtn(String(i), i, { active: i === productPage }));
+            if (to < totalPages) { if (to < totalPages - 1) el.appendChild(dots()); el.appendChild(mkBtn(String(totalPages), totalPages)); }
+            el.appendChild(mkBtn('›', productPage + 1, { disabled: productPage >= totalPages }));
+
+            function dots() { const s = document.createElement('span'); s.textContent = '…'; s.className = 'px-1 text-slate-400 self-end pb-2'; return s; }
+        }
+
+        window.goProductPage = (page) => {
+            productPage = page;
+            renderProducts();
+            const c = document.getElementById('products-container');
+            if (c && c.scrollIntoView) c.scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
         // ---------- Cart ----------
@@ -1414,16 +1471,18 @@
                 setTimeout(() => document.getElementById('cash-input').focus(), 200);
             } else if (type === 'QRIS') {
                 document.getElementById('qris-modal-total').innerText = formatRupiah(orderTotal);
+                const nameEl = document.getElementById('qris-store-name');
+                if (nameEl) nameEl.innerText = store.name || '';
                 const img = document.getElementById('qris-qr-code');
                 const caption = document.getElementById('qris-caption');
                 if (store.qrisImage) {
                     img.src = store.qrisImage;
-                    caption.innerText = 'Pelanggan memindai QRIS toko Anda dengan m-banking atau e-wallet, lalu konfirmasi.';
+                    caption.innerText = 'Arahkan kamera m-banking / e-wallet pelanggan ke QRIS ini, lalu konfirmasi pembayaran.';
                 } else {
                     const orderId = 'QR-' + Math.floor(Math.random() * 900000 + 100000);
                     const data = encodeURIComponent(`qris-demo://pay?amount=${orderTotal}&order=${orderId}`);
-                    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${data}`;
-                    caption.innerText = 'Belum ada foto QRIS. Ini hanya QR demo — unggah QRIS toko Anda di Pengaturan.';
+                    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&margin=10&data=${data}`;
+                    caption.innerText = 'Ini hanya QR demo (belum bisa dibayar). Unggah foto QRIS toko Anda di Pengaturan agar tampil di sini.';
                 }
                 document.getElementById('qris-modal').classList.remove('hidden');
             }
@@ -2199,7 +2258,8 @@
             else { wrap.classList.add('hidden'); if (removeBtn) removeBtn.classList.add('hidden'); }
         }
 
-        function resizeImage(file, maxSize, cb) {
+        function resizeImage(file, maxSize, cb, quality) {
+            const q = quality || 0.82;
             const reader = new FileReader();
             reader.onload = (e) => {
                 const dataUrl = e.target.result;
@@ -2215,7 +2275,7 @@
                             const ctx = canvas.getContext('2d');
                             ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, height);
                             ctx.drawImage(img, 0, 0, width, height);
-                            cb(canvas.toDataURL('image/jpeg', 0.82));
+                            cb(canvas.toDataURL('image/jpeg', q));
                         } catch (err) { cb(dataUrl); }
                     };
                     img.onerror = () => cb(dataUrl);
@@ -2229,13 +2289,13 @@
             const file = event.target.files[0];
             if (!file) return;
             if (!file.type.startsWith('image/')) { showToast('File harus berupa gambar', 'warning'); event.target.value = ''; return; }
-            resizeImage(file, 600, (dataUrl) => {
+            resizeImage(file, 1000, (dataUrl) => {
                 store.qrisImage = dataUrl;
                 persistStore();
                 markDirtyAndSync();
                 renderQrisPreview();
                 showToast('Foto QRIS tersimpan', 'success');
-            });
+            }, 0.92);
             event.target.value = '';
         };
 
