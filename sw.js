@@ -1,7 +1,7 @@
 // SmartKasir Service Worker
 // Strategi: network-first untuk halaman (agar update cepat tampil),
 // cache-first untuk aset statis (ikon/manifest).
-const CACHE = 'smartkasir-v2';
+const CACHE = 'smartkasir-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -30,10 +30,10 @@ self.addEventListener('fetch', (e) => {
   // Hanya tangani permintaan same-origin. Biarkan CDN (Tailwind/Chart.js/font) lewat jaringan.
   if (url.origin !== self.location.origin) return;
 
-  // HTML/navigasi: network-first
+  // HTML/navigasi: network-first, selalu ambil versi terbaru (lewati cache browser)
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     e.respondWith(
-      fetch(req).then((res) => {
+      fetch(req, { cache: 'reload' }).then((res) => {
         const copy = res.clone();
         caches.open(CACHE).then((c) => c.put(req, copy));
         return res;

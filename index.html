@@ -756,11 +756,12 @@
                         <button onclick="clearAllData()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 py-2.5 px-3 rounded-xl font-bold text-xs transition-all">Hapus Semua Data</button>
                     </div>
                 </div>
+                <div class="border-t border-slate-100 pt-4 text-center">
+                    <p class="text-[11px] text-slate-400">SmartKasir <span id="app-version-label">—</span></p>
+                </div>
             </div>
         </div>
     </div>
-
-    <!-- PRINT AREA -->
     <div id="print-area"></div>
     </div><!-- /app-root -->
 
@@ -784,7 +785,8 @@
         //               Sheet milik toko itu sendiri (disambungkan di Pengaturan).
         //  Cukup diisi SEKALI di sini, lalu commit ke GitHub.
         // =====================================================================
-        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbzBZ2ItF1DeKR6Ds-WyXqI9M0kgfo6AQcuxR-GoPldbR03TnzVY79FykcX_rRokEC_0/exec'; // = URL Registry
+        const BACKEND_URL = ''; // = URL Registry
+        const APP_VERSION = 'v2026.06.26';
 
         // ---------- Storage ----------
         const K = {
@@ -2386,9 +2388,19 @@
         // ---------- Init ----------
         function init() {
             loadState();
+            const vl = document.getElementById('app-version-label');
+            if (vl) vl.textContent = APP_VERSION;
 
             if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-                navigator.serviceWorker.register('sw.js').catch(() => {});
+                let reloadedForUpdate = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (reloadedForUpdate) return;
+                    reloadedForUpdate = true;
+                    location.reload();
+                });
+                navigator.serviceWorker.register('sw.js').then((reg) => {
+                    try { reg.update(); } catch (e) {}
+                }).catch(() => {});
             }
 
             if (registryMode()) {
