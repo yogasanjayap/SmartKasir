@@ -756,7 +756,8 @@
                         <button onclick="clearAllData()" class="bg-rose-50 hover:bg-rose-100 text-rose-700 py-2.5 px-3 rounded-xl font-bold text-xs transition-all">Hapus Semua Data</button>
                     </div>
                 </div>
-                <div class="border-t border-slate-100 pt-4 text-center">
+                <div class="border-t border-slate-100 pt-4 flex flex-col items-center gap-2">
+                    <button onclick="forceUpdate()" class="text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-4 py-2 rounded-xl transition-all">Perbarui Aplikasi (bersihkan cache)</button>
                     <p class="text-[11px] text-slate-400">SmartKasir <span id="app-version-label">—</span></p>
                 </div>
             </div>
@@ -785,7 +786,7 @@
         //               Sheet milik toko itu sendiri (disambungkan di Pengaturan).
         //  Cukup diisi SEKALI di sini, lalu commit ke GitHub.
         // =====================================================================
-        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbzBZ2ItF1DeKR6Ds-WyXqI9M0kgfo6AQcuxR-GoPldbR03TnzVY79FykcX_rRokEC_0/exec'; // = URL Registry
+        const BACKEND_URL = ''; // = URL Registry
         const APP_VERSION = 'v2026.06.26';
 
         // ---------- Storage ----------
@@ -2333,6 +2334,23 @@
             refreshAppUI();
             closeSettings();
             showToast('Semua data dihapus', 'info');
+        };
+
+        // Bersihkan service worker + cache lalu reload (paksa ambil versi terbaru)
+        window.forceUpdate = async () => {
+            if (!confirm('Perbarui aplikasi ke versi terbaru? Cache dibersihkan lalu halaman dimuat ulang. Data penjualan Anda TIDAK terhapus.')) return;
+            showToast('Membersihkan cache & memuat ulang...', 'info');
+            try {
+                if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(regs.map(r => r.unregister()));
+                }
+                if (window.caches && caches.keys) {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map(k => caches.delete(k)));
+                }
+            } catch (e) {}
+            setTimeout(() => location.reload(), 300);
         };
 
         window.exportToCSV = () => {
