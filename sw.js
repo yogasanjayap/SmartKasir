@@ -1,7 +1,7 @@
 // SmartKasir Service Worker
 // Strategi: network-first untuk halaman (agar update cepat tampil),
 // cache-first untuk aset statis (ikon/manifest).
-const CACHE = 'smartkasir-v5';
+const CACHE = 'smartkasir-v6';
 const APP_SHELL = [
   './',
   './index.html',

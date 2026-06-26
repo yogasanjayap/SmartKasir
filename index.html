@@ -183,8 +183,13 @@
                             </span>
                             <input oninput="filterProducts()" id="search-product" type="text" inputmode="search" placeholder="Cari nama produk..." class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 placeholder-slate-400 text-base font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white focus:border-emerald-500 transition-all">
                         </div>
-                        <div id="category-bar" class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-                            <!-- category buttons rendered by JS -->
+                        <div class="relative sm:w-56 shrink-0">
+                            <select id="category-select" onchange="setCategory(this.value)" class="w-full appearance-none pl-4 pr-10 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-900 text-base font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white focus:border-emerald-500 transition-all cursor-pointer">
+                                <!-- options rendered by JS -->
+                            </select>
+                            <span class="pointer-events-none absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                            </span>
                         </div>
                     </div>
 
@@ -794,8 +799,8 @@
         //               Sheet milik toko itu sendiri (disambungkan di Pengaturan).
         //  Cukup diisi SEKALI di sini, lalu commit ke GitHub.
         // =====================================================================
-        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbzBZ2ItF1DeKR6Ds-WyXqI9M0kgfo6AQcuxR-GoPldbR03TnzVY79FykcX_rRokEC_0/exec'; // = URL Registry
-        const APP_VERSION = 'v2026.06.27b';
+        const BACKEND_URL = ''; // = URL Registry
+        const APP_VERSION = 'v2026.06.27c';
 
         // ---------- Storage ----------
         const K = {
@@ -1243,20 +1248,25 @@
 
         // ---------- Categories ----------
         function renderCategoryBar() {
-            const bar = document.getElementById('category-bar');
-            bar.innerHTML = '';
+            const sel = document.getElementById('category-select');
+            if (!sel) return;
             if (selectedCategory !== 'Semua' && categories.indexOf(selectedCategory) === -1) selectedCategory = 'Semua';
+            sel.innerHTML = '';
             ['Semua'].concat(categories).forEach(cat => {
-                const btn = document.createElement('button');
-                const active = cat === selectedCategory;
-                btn.className = active
-                    ? 'category-btn bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shadow-sm'
-                    : 'category-btn bg-slate-100 text-slate-600 hover:bg-slate-200 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all';
-                btn.textContent = cat;
-                btn.onclick = () => { selectedCategory = cat; productPage = 1; renderCategoryBar(); renderProducts(); };
-                bar.appendChild(btn);
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat === 'Semua' ? 'Semua Kategori' : cat;
+                if (cat === selectedCategory) opt.selected = true;
+                sel.appendChild(opt);
             });
+            sel.value = selectedCategory;
         }
+
+        window.setCategory = (cat) => {
+            selectedCategory = cat;
+            productPage = 1;
+            renderProducts();
+        };
 
         window.filterProducts = () => { searchQuery = document.getElementById('search-product').value; productPage = 1; renderProducts(); };
 
