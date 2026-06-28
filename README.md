@@ -10,7 +10,8 @@ Aplikasi kasir (POS / Point of Sale) sederhana untuk **warung, kafe, dan toko ke
 
 - **Mesin Kasir** — katalog produk dengan pencarian & filter kategori, keranjang belanja, dan checkout.
 - **Kategori produk dinamis** — tambah & hapus kategori sendiri (mis. Makanan, Minuman, Snack, Rokok). Saat kategori dihapus, produk di dalamnya otomatis dipindah ke kategori lain.
-- **Pembayaran** — Tunai (tombol uang cepat, uang pas, hitung kembalian otomatis) atau **QRIS**.
+- **Pembayaran** — Tunai (tombol uang cepat, uang pas, hitung kembalian otomatis) atau **QRIS** (tampil layar penuh untuk dipindai).
+- **Print Dapur (kitchen ticket, thermal)** — cetak pesanan ke dapur dengan ukuran printer thermal (80mm). Simpan bill dulu, lalu bila ada tambahan order, cetak lagi — yang tercetak **hanya item tambahannya** (berlabel "TAMBAHAN").
 - **Pelanggan (modul tersendiri) + Open Bill / Close Bill** — tab **Pelanggan** untuk kelola nama, no. HP &amp; catatan pelanggan. Saat pesan: isi keranjang → **Simpan sebagai Bill** dengan memilih pelanggan. Untuk menutup, cukup **klik nama pelanggan** (di tab Pelanggan atau daftar Bill Terbuka) → bill termuat ke kasir → bayar Tunai/QRIS. Nama pelanggan muncul di struk &amp; Sheet.
 - **Upload foto QRIS toko** — unggah gambar QRIS asli toko Anda di Pengaturan; saat pelanggan bayar QRIS, foto itu yang ditampilkan untuk dipindai. (Jika belum diunggah, ditampilkan QR demo.)
 - **Struk** — struk otomatis yang bisa dicetak. Nama, alamat, telepon, dan catatan toko bisa diatur sendiri.

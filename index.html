@@ -60,9 +60,10 @@
             #print-area, #print-area * { visibility: visible; }
             #print-area {
                 display: block; position: absolute; left: 0; top: 0; width: 100%;
-                padding: 12px; font-family: 'Courier New', monospace; color: #000;
+                padding: 2mm; font-family: 'Courier New', monospace; color: #000;
             }
-            @page { margin: 6mm; }
+            /* Ukuran kertas thermal 80mm (ubah ke 58mm bila printer Anda 58mm) */
+            @page { size: 80mm auto; margin: 3mm; }
         }
     </style>
 </head>
@@ -228,6 +229,10 @@
                             <span>Total</span>
                             <span id="cart-total-desktop">Rp 0</span>
                         </div>
+                        <button onclick="printKitchen()" id="btn-kitchen-desktop" class="w-full bg-white border-2 border-orange-400 text-orange-600 hover:bg-orange-50 py-2.5 px-4 rounded-xl font-bold text-center transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                            Print Dapur
+                        </button>
                         <button onclick="openPaymentModal()" id="btn-bayar-desktop" disabled class="w-full bg-slate-200 text-slate-400 cursor-not-allowed py-3 px-4 rounded-xl font-bold text-center transition-all">
                             Pilih Pembayaran
                         </button>
@@ -451,6 +456,10 @@
                 <span>Total</span>
                 <span id="cart-total-mobile">Rp 0</span>
             </div>
+            <button onclick="printKitchen()" id="btn-kitchen-mobile" class="w-full bg-white border-2 border-orange-400 text-orange-600 hover:bg-orange-50 py-2.5 px-4 rounded-xl font-bold text-center transition-all flex items-center justify-center gap-2 mb-2 disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                Print Dapur
+            </button>
             <button onclick="openPaymentModal()" id="btn-bayar-mobile" disabled class="w-full bg-slate-200 text-slate-400 cursor-not-allowed py-3.5 px-4 rounded-xl font-bold text-center transition-all">
                 Pilih Pembayaran
             </button>
@@ -799,8 +808,8 @@
         //               Sheet milik toko itu sendiri (disambungkan di Pengaturan).
         //  Cukup diisi SEKALI di sini, lalu commit ke GitHub.
         // =====================================================================
-        const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbzBZ2ItF1DeKR6Ds-WyXqI9M0kgfo6AQcuxR-GoPldbR03TnzVY79FykcX_rRokEC_0/exec'; // = URL Registry
-        const APP_VERSION = 'v2026.06.27c';
+        const BACKEND_URL = ''; // = URL Registry
+        const APP_VERSION = 'v2026.06.28';
 
         // ---------- Storage ----------
         const K = {
@@ -820,6 +829,7 @@
         let products = [];
         let transactions = [];
         let cart = [];
+        let cartKitchenSent = {}; // { kitchenKey: qty } -> item yang sudah dikirim ke dapur
         let store = {
             name: 'SmartKasir',
             address: 'Alamat toko, kota',
@@ -1378,7 +1388,7 @@
             showToast(`Dihapus: ${name}`, 'info');
         };
 
-        window.clearCart = () => { cart = []; renderCart(); };
+        window.clearCart = () => { cart = []; cartKitchenSent = {}; renderCart(); };
 
         function cartItemsHtml() {
             if (cart.length === 0) {
@@ -1428,6 +1438,10 @@
                     ? 'w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 px-4 rounded-xl font-extrabold text-center transition-all shadow-md shadow-emerald-100 active:scale-95'
                     : 'w-full bg-slate-200 text-slate-400 cursor-not-allowed py-3.5 px-4 rounded-xl font-bold text-center transition-all';
                 btn.innerText = hasItems ? `Bayar ${formatRupiah(total)}` : 'Pilih Pembayaran';
+            });
+            ['btn-kitchen-desktop', 'btn-kitchen-mobile'].forEach(id => {
+                const b = document.getElementById(id);
+                if (b) b.disabled = !hasItems;
             });
 
             // Floating bar
@@ -1606,6 +1620,65 @@
         };
         window.closeReceiptModal = () => document.getElementById('receipt-modal').classList.add('hidden');
         window.printReceipt = () => window.print();
+
+        // ---------- Print Dapur (Kitchen ticket, thermal) ----------
+        const kitchenKey = (item) => (item.product && (item.product.id || item.product.name)) || '';
+
+        function kitchenTicketHtml(items, isTambahan) {
+            const now = new Date();
+            const tgl = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+            const jam = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            const cust = activeBillCustomerName() || 'Pelanggan';
+            const rows = items.map(it => `
+                <tr>
+                    <td style="font-size:20px;font-weight:bold;padding:3px 8px 3px 0;vertical-align:top;white-space:nowrap;">${it.qty}x</td>
+                    <td style="font-size:18px;font-weight:bold;padding:3px 0;">${escapeHtml(it.name)}</td>
+                </tr>`).join('');
+            return `
+                <div style="font-family:'Courier New',monospace;color:#000;width:100%;">
+                    <div style="text-align:center;font-size:20px;font-weight:bold;letter-spacing:1px;">PESANAN DAPUR</div>
+                    ${isTambahan ? '<div style="text-align:center;font-size:16px;font-weight:bold;border:2px solid #000;padding:3px;margin:6px 0;">*** TAMBAHAN ***</div>' : ''}
+                    <div style="border-top:2px dashed #000;margin:8px 0 6px;"></div>
+                    <div style="font-size:16px;font-weight:bold;">${escapeHtml(cust)}</div>
+                    <div style="font-size:12px;margin-bottom:6px;">${tgl} ${jam}</div>
+                    <div style="border-top:1px dashed #000;margin-bottom:6px;"></div>
+                    <table style="width:100%;border-collapse:collapse;">${rows}</table>
+                    <div style="border-top:2px dashed #000;margin-top:8px;padding-top:4px;text-align:center;font-size:11px;">${escapeHtml(store.name || 'SmartKasir')}</div>
+                </div>`;
+        }
+
+        window.printKitchen = () => {
+            if (cart.length === 0) { showToast('Keranjang masih kosong', 'warning'); return; }
+            // hitung item yang BELUM dikirim ke dapur (delta)
+            const delta = [];
+            cart.forEach(i => {
+                const key = kitchenKey(i);
+                const sent = cartKitchenSent[key] || 0;
+                const baru = i.qty - sent;
+                if (baru > 0) delta.push({ name: i.product.name, qty: baru });
+            });
+            const isTambahan = Object.keys(cartKitchenSent).length > 0;
+            if (delta.length === 0) {
+                showToast('Semua item sudah dikirim ke dapur. Tambah item dulu untuk cetak tambahan.', 'info');
+                return;
+            }
+            document.getElementById('print-area').innerHTML = kitchenTicketHtml(delta, isTambahan);
+            window.print();
+            // tandai semua item cart sebagai sudah dikirim
+            cart.forEach(i => { cartKitchenSent[kitchenKey(i)] = i.qty; });
+            // jika sedang mengisi bill, simpan tambahan item + status kirim ke bill
+            if (activeBillId) {
+                const bill = openBills.find(b => b.id === activeBillId);
+                if (bill) {
+                    bill.items = cart.map(i => ({ productId: i.product.id, name: i.product.name, qty: i.qty, price: i.product.price }));
+                    bill.kitchenSent = Object.assign({}, cartKitchenSent);
+                    persistOpenBills();
+                    markDirtyAndSync();
+                    renderOpenBillsUI();
+                }
+            }
+            showToast(isTambahan ? 'Tambahan pesanan dikirim ke dapur' : 'Pesanan dikirim ke dapur', 'success');
+        };
 
         // ---------- Transactions ----------
         window.renderTransactions = () => {
@@ -2158,13 +2231,15 @@
             const existing = openBills.find(b => b.id === activeBillId);
             if (existing) {
                 existing.items = items; existing.customerId = custId; existing.customerName = custName; existing.note = note;
+                existing.kitchenSent = Object.assign({}, cartKitchenSent);
             } else {
-                openBills.unshift({ id: newId('bill'), customerId: custId, customerName: custName, items, note, createdAt: new Date().toISOString() });
+                openBills.unshift({ id: newId('bill'), customerId: custId, customerName: custName, items, note, createdAt: new Date().toISOString(), kitchenSent: Object.assign({}, cartKitchenSent) });
             }
             persistOpenBills();
             markDirtyAndSync();
             activeBillId = null;
             cart = [];
+            cartKitchenSent = {};
             closeBillSaveModal();
             closeCartDrawer();
             renderCart();
@@ -2214,6 +2289,7 @@
             const bill = openBills.find(b => b.id === billId);
             if (!bill) return;
             cart = (bill.items || []).map(it => ({ product: { id: it.productId || newId('p'), name: it.name, price: Number(it.price) || 0 }, qty: Number(it.qty) || 0 }));
+            cartKitchenSent = Object.assign({}, bill.kitchenSent || {});
             activeBillId = billId;
             closeBillsListModal();
             switchTab('kasir');
@@ -2240,6 +2316,7 @@
             // batal menutup bill: kosongkan keranjang, bill tetap tersimpan
             activeBillId = null;
             cart = [];
+            cartKitchenSent = {};
             renderCart();
             renderOpenBillsUI();
             showToast('Dibatalkan. Bill tetap tersimpan di daftar Bill Terbuka.', 'info');
